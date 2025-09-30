@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Vulnerable App — Test</title>
+</head>
+<body>
+  <h1>Vulnerable App (Local)</h1>
+
+  <section>
+    <h2>1) Login (broken auth)</h2>
+    <form id="loginForm">
+      <input name="username" placeholder="username" value="admin">
+      <input name="password" placeholder="password" value="password">
+      <button>Login</button>
+    </form>
+    <pre id="loginResult"></pre>
+  </section>
+
+  <section>
+    <h2>2) SQL Injection test</h2>
+    <p>Try username: <code>alice' OR '1'='1</code></p>
+    <form id="userForm">
+      <input name="name" placeholder="username">
+      <button>Get User</button>
+    </form>
+    <pre id="userResult"></pre>
+  </section>
+
+  <section>
+    <h2>3) Reflected XSS</h2>
+    <form id="greetForm">
+      <input name="name" placeholder="Your name">
+      <button>Greet</button>
+    </form>
+    <iframe id="greetFrame" style="width:100%;height:100px"></iframe>
+  </section>
+
+  <section>
+    <h2>4) File upload (no validation)</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="file">
+      <button>Upload</button>
+    </form>
+    <pre id="uploadResult"></pre>
+  </section>
+
+<script>
+document.getElementById('loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const params = new URLSearchParams(fd);
+  const res = await fetch('/login', { method: 'POST', body: params });
+  const json = await res.json();
+  document.getElementById('loginResult').innerText = JSON.stringify(json, null, 2);
+};
+
+document.getElementById('userForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const name = e.target.name.value;
+  const res = await fetch('/user?name=' + encodeURIComponent(name));
+  const json = await res.json();
+  document.getElementById('userResult').innerText = JSON.stringify(json, null, 2);
+};
+
+document.getElementById('greetForm').onsubmit = (e) => {
+  e.preventDefault();
+  const name = e.target.name.value;
+  document.getElementById('greetFrame').src = '/greet?name=' + encodeURIComponent(name);
+};
+
+document.getElementById('uploadForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const res = await fetch('/upload', { method: 'POST', body: fd });
+  const json = await res.json();
+  document.getElementById('uploadResult').innerText = JSON.stringify(json, null, 2);
+};
+</script>
+</body>
+</html>
